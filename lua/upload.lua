@@ -1,5 +1,12 @@
 
-local bint = require('./process/bint')(256*3+32)
+local bint = require('.bint')(256*3+32)
+local crypto = require(".crypto");
+local sha3_keccak256 = crypto.digest.keccak256
+local ao = require('ao')
+
+
+
+
 
 function secp256k1_curve()
     local a = bint(0)
@@ -223,12 +230,113 @@ function DiscreteEllipticCurve(a_in, b_in, p_in, G_in, n_in, n_half_in)
      return self
 end
 
-return {
-  DiscreteEllipticCurve=DiscreteEllipticCurve,
-  secp256k1_curve=secp256k1_curve,
-  bigIntMod=bigIntMod,
-  powMod=powMod,
-  bigIntDiv=bigIntDiv,
-  bigIntToBinaryStr=bigIntToBinaryStr,
-  inverseOf=inverseOf
-}
+
+
+
+
+
+
+local keccak256 = {}
+function keccak256.fromStr(data)
+	assert(type(data) == 'string', 'string is required!')
+	return "0x" .. sha3_keccak256(data).asHex()
+end
+-- data = "0x616f" or "616f" (string "ao")
+function keccak256.fromHex(data)
+	assert(type(data) == 'string', 'string is required!')
+	assert(#data % 2 == 0, 'even length is required!')
+	data = string.gsub(data, "0x", "")
+	local _data = ""
+	for i=1, #data, 2 do
+		local str = string.sub(data, i, i+1)
+		local num = tonumber(str, 16)
+		_data = _data .. string.char(num)
+		-- print(#_data, _data)
+	end
+	return "0x" .. sha3_keccak256(_data).asHex()
+end
+
+
+
+
+
+
+
+
+
+function proofVerify(proof)
+
+    local n = bint("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
+
+    local curve = DiscreteEllipticCurve(secp256k1_curve())
+
+    proof = string.gsub(proof, "0x", "")
+
+    local s = bint("0x" .. string.sub(proof, 1, 64))
+    local B = {bint("0x" .. string.sub(proof, 65, 128)), bint("0x" .. string.sub(proof, 129, 192))}
+    local c = bint("0x" .. string.sub(proof, 193, 256))
+    c = bigIntMod(c, n);
+
+    local publicKey = {bint("0x" .. string.sub(proof, 257, 320)), bint("0x" .. string.sub(proof, 321, 384))}
+
+    local sB = curve.scalarMulWithBasePoint(s, B);
+
+    local cP = curve.scalarMulWithBasePoint(c, publicKey);
+
+    local R = curve.add(sB, cP);
+
+    local strForHash =  bint.tobase(B[1], 16, 1) .. bint.tobase(B[2], 16, 1)
+    strForHash = strForHash .. string.sub(proof, 257, 384)
+    strForHash = strForHash .. bint.tobase(R[1], 16, 1) .. bint.tobase(R[2], 16, 1)
+
+    local hashByteStr = keccak256.fromHex(strForHash);
+
+
+    
+    local c_proof = bigIntMod(bint(hashByteStr), n);
+
+    if c_proof == c then 
+        return "true"
+    else
+        return "false"
+    end
+    -- print(bint.tobase(R[1], 16, 1) .. bint.tobase(R[2], 16, 1))
+    -- print(c_proof)
+    -- print(c)
+    -- print(s)
+    -- print(B[1])
+    -- print(B[2])
+    -- print(c)
+end
+
+
+
+
+VerifyResult = VerifyResult or {}
+
+Handlers.add('verify', Handlers.utils.hasMatchingTag('Action', 'Verify'), function(msg)
+  local _hash = keccak256.fromHex(msg.Data)
+  local _result = proofVerify(msg.Data)
+  VerifyResult[_hash] = _result
+  ao.send({
+    Target = msg.From,
+    Data=_result
+    -- Data = msg.Data .. "--ok"
+  })
+end)
+
+
+Handlers.add('getVerifyResult', Handlers.utils.hasMatchingTag('Action', 'GetVerifyResult'), function(msg)
+  local _hash = keccak256.fromHex(msg.Data)
+  ao.send({
+    Target = msg.From,
+    Data=VerifyResult[_hash]
+    -- Data = msg.Data .. "--ok"
+  })
+end)
+
+
+
+-- local proof = "0x3e0a1130170986a28844d9d70c73fcceef2f6feecee41f5296dcce38daaf4a6579be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8d26326f1c17b5a07a1dcb3f417201003d4643bb436f9cefe8c5d813fdf8b56596d11b37ef4fc909ae1ec6c63584f99843f04ea9466730f8e58950c8c7262e6933ca3dd37304995604f567517e8c6e6074de37eab843f91475f713bd062067e61"
+-- print(proofVerify(proof))
+
