@@ -1,0 +1,23 @@
+.card {
+    width: 600px;
+    margin: 0 auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  
+  .input {
+    height: 40px;
+    margin-bottom: 20px;
+  }
+
+  .space {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .button {
+    margin-top: 10px;
+  }
