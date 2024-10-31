@@ -1,19 +1,26 @@
-import styles from "./header.module.css";
-import { ConnectButton } from "thirdweb/react";
+import { useEffect, useState } from "react";
+import { Card, Input, Button, Space, Typography } from "antd";
 
-import { client } from "../pages/client";
-import { createWallet } from "thirdweb/wallets";
+import styles from "./header.module.css";
+
+import { useWallet } from "../pages/api/useWallet";
+
+
+const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
 
 export default function Header() {
+    const { account, connectWallet } = useWallet();
+
+
     return (
         <div className={styles.header}>
             <div className={styles.title}>AO Bridge</div>
             <div>
-                <ConnectButton client={client} wallets={[
-                    createWallet("io.metamask"),
-                    createWallet("com.coinbase.wallet"),
-                    createWallet("me.rainbow"),
-                ]} />
+                <Button type="primary" size="large" block onClick={connectWallet}>
+                    {account ? formatAddress(account) : "Connect Wallet"}
+                </Button>
             </div>
         </div>
     );
