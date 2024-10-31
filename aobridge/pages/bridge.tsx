@@ -28,17 +28,17 @@ export default function Bridge() {
     const handleBridge = async () => {
         setLoading(true);
         try {
-            const { s_lastRequestId, s_lastResponse, s_lastError, txReceipt } = await BridgeTtansaction(signer, proof);
+            const { lastRequestId, lastResponse, lastError, txReceipt } = await BridgeTtansaction(signer, proof);
             // 在这里使用这三个变量
-            if (s_lastResponse === "0x") {
+            if (lastResponse === "0x") {
                 setResult("error");
             } else {
-                setResult(hexToString(s_lastResponse));
+                setResult(hexToString(lastResponse));
             }
             console.log("Received values:");
-            console.log("s_lastRequestId:", s_lastRequestId);
-            console.log("s_lastResponse:", s_lastResponse);
-            console.log("s_lastError:", s_lastError);
+            console.log("lastRequestId:", lastRequestId);
+            console.log("lastResponse:", lastResponse);
+            console.log("lastError:", lastError);
             console.log("Transaction Receipt:", txReceipt);
         } catch (error) {
             console.error("Error during bridge operation:", error);
@@ -64,7 +64,7 @@ export default function Bridge() {
                     onChange={(e) => setProof(e.target.value)}
                 />
                 <Space className={styles.space}>
-                    <Text>
+                    <Text className={styles.text}>
                         Result: {result}
                     </Text>
                 </Space>

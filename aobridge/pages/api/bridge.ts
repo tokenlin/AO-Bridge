@@ -37,21 +37,21 @@ export const BridgeTtansaction = async (
     const txReceipt = await requestTx.wait(1);
     console.log(`Request made. TxHash: ${requestTx.hash}`);
 
-    const s_lastRequestId = await functionsConsumer.s_lastRequestId();
-    const s_lastResponse = await functionsConsumer.s_lastResponse();
-    const s_lastError = await functionsConsumer.s_lastError();
+    const lastRequestId = await functionsConsumer.s_lastRequestId();
+    const lastResponse = await functionsConsumer.s_lastResponse();
+    const lastError = await functionsConsumer.s_lastError();
 
-    console.log("s_lastRequestId:", s_lastRequestId);
-    console.log("s_lastResponse:", s_lastResponse);
-    console.log("s_lastError:", s_lastError);
+    console.log("lastRequestId:", lastRequestId);
+    console.log("lastResponse:", lastResponse);
+    console.log("lastError:", lastError);
 
     console.log("Transaction Receipt:", txReceipt);
 
     // 返回这些变量
     return {
-      s_lastRequestId,
-      s_lastResponse,
-      s_lastError,
+      lastRequestId,
+      lastResponse,
+      lastError,
       txReceipt, // 也可以返回交易回执
     };
   } catch (error) {
